@@ -43,5 +43,31 @@
     </footer>
 
     <script src="script.js"></script>
+    <section class="form-container">
+  <h2>Hacer Pedido</h2>
+
+  <form id="pedidoForm">
+    
+    <label>Nombre:</label>
+    <input type="text" id="nombre" required>
+
+    <label>Producto:</label>
+    <select id="producto" required>
+      <option value="">Selecciona un producto</option>
+      <option value="Sabritas">Sabritas - $20</option>
+      <option value="Chocolate">Chocolate - $15</option>
+      <option value="Galletas">Galletas - $10</option>
+    </select>
+
+    <label>Cantidad:</label>
+    <input type="number" id="cantidad" min="1" required>
+
+    <label>Notas:</label>
+    <textarea id="notas" placeholder="Opcional"></textarea>
+
+    <button type="submit">Enviar Pedido</button>
+  </form>
+
+</section>
 </body>
 </html>

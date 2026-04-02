@@ -43,7 +43,7 @@ Cantidad: ${cantidad}
 Total: $${total}
 Notas: ${notas}`;
 
-  const numero = "521XXXXXX52 993 277 5108XXXX"; //  numero 
+  const numero = "993 277 5108"; //  numero 
 
   const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
 

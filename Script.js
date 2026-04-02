@@ -1,5 +1,3 @@
-//Formulario
-
 let precioActual = 0;
 
 function abrirFormulario(producto, precio) {
@@ -24,7 +22,6 @@ function actualizarTotal() {
   document.getElementById("total").textContent = "Total: $" + total;
 }
 
-//  detectar cuando cambia la cantidad
 document.getElementById("cantidad").addEventListener("input", actualizarTotal);
 
 document.getElementById("pedidoForm").addEventListener("submit", function(e) {
@@ -41,12 +38,12 @@ document.getElementById("pedidoForm").addEventListener("submit", function(e) {
 
 Nombre: ${nombre}
 Producto: ${producto}
-Precio unitario: $${precioActual}
+Precio: $${precioActual}
 Cantidad: ${cantidad}
 Total: $${total}
 Notas: ${notas}`;
 
-  const numero = "5252 993 277 5108"; //remplazar con el numero de mi amigo xd
+  const numero = "521XXXXXX52 993 277 5108XXXX"; //  numero 
 
   const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
 
@@ -55,3 +52,11 @@ Notas: ${notas}`;
   cerrarFormulario();
   this.reset();
 });
+
+// cerrar si da click fuera
+window.onclick = function(e) {
+  const popup = document.getElementById("formPopup");
+  if (e.target === popup) {
+    cerrarFormulario();
+  }
+};

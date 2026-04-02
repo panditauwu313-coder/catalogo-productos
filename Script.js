@@ -1,9 +1,31 @@
-// Añadir funcionalidad al botón "Añadir al carrito"
-document.querySelectorAll('.product-card button').forEach(button => {
-    button.addEventListener('click', () => {
-        alert('Producto añadido al carrito');
-    });
-});
+//Formulario
+
+let precioActual = 0;
+
+function abrirFormulario(producto, precio) {
+  document.getElementById("formPopup").style.display = "flex";
+
+  document.getElementById("producto").value = producto;
+  document.getElementById("cantidad").value = 1;
+
+  precioActual = precio;
+
+  actualizarTotal();
+}
+
+function cerrarFormulario() {
+  document.getElementById("formPopup").style.display = "none";
+}
+
+function actualizarTotal() {
+  const cantidad = document.getElementById("cantidad").value;
+  const total = cantidad * precioActual;
+
+  document.getElementById("total").textContent = "Total: $" + total;
+}
+
+//  detectar cuando cambia la cantidad
+document.getElementById("cantidad").addEventListener("input", actualizarTotal);
 
 document.getElementById("pedidoForm").addEventListener("submit", function(e) {
   e.preventDefault();
@@ -13,16 +35,23 @@ document.getElementById("pedidoForm").addEventListener("submit", function(e) {
   const cantidad = document.getElementById("cantidad").value;
   const notas = document.getElementById("notas").value;
 
-  const pedido = {
-    nombre,
-    producto,
-    cantidad,
-    notas
-  };
+  const total = cantidad * precioActual;
 
-  console.log("Pedido:", pedido);
+  const mensaje = `🛒 Pedido nuevo:
 
-  alert("Pedido enviado (solo prueba)");
+Nombre: ${nombre}
+Producto: ${producto}
+Precio unitario: $${precioActual}
+Cantidad: ${cantidad}
+Total: $${total}
+Notas: ${notas}`;
 
+  const numero = "5252 993 277 5108"; //remplazar con el numero de mi amigo xd
+
+  const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+
+  window.open(url, "_blank");
+
+  cerrarFormulario();
   this.reset();
 });

@@ -1,21 +1,24 @@
+import { db } from "./firebase.js";
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
 window.agregarProducto = async function () {
-  console.log("click detectado"); // 👈 aquí sí
+  console.log("CLICK DETECTADO");
 
-  const nombre = document.getElementById("nombre").value;
-  const precio = document.getElementById("precio").value;
+  try {
+    const nombre = document.getElementById("nombre").value;
+    const precio = document.getElementById("precio").value;
 
-  if (!nombre || !precio) {
-    alert("Completa los campos");
-    return;
+    console.log(nombre, precio);
+
+    const docRef = await addDoc(collection(db, "productos"), {
+      nombre: nombre,
+      precio: Number(precio)
+    });
+
+    console.log("Guardado con ID:", docRef.id);
+    alert("Producto agregado");
+
+  } catch (error) {
+    console.error("ERROR:", error);
   }
-
-  await addDoc(collection(db, "productos"), {
-    nombre: nombre,
-    precio: Number(precio)
-  });
-
-  alert("Producto agregado");
-
-  document.getElementById("nombre").value = "";
-  document.getElementById("precio").value = "";
 };

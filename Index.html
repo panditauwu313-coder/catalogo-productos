@@ -12,29 +12,8 @@
   <h1>Catálogo de Productos</h1>
 </header>
 
-<section class="catalogo">
-
-  <div class="product-card">
-    <img src="https://via.placeholder.com/150">
-    <h2>Sabritas</h2>
-    <p class="price">$20</p>
-    <button onclick="abrirFormulario('Sabritas', 20)">Pedir</button>
-  </div>
-
-  <div class="product-card">
-    <img src="https://via.placeholder.com/150">
-    <h2>Chocolate</h2>
-    <p class="price">$15</p>
-    <button onclick="abrirFormulario('Chocolate', 15)">Pedir</button>
-  </div>
-
-  <div class="product-card">
-    <img src="https://via.placeholder.com/150">
-    <h2>Galletas</h2>
-    <p class="price">$10</p>
-    <button onclick="abrirFormulario('Galletas', 10)">Pedir</button>
-  </div>
-
+<section class="catalogo" id="productos">
+  <!--  Aquí se cargarán los productos dinámicamente -->
 </section>
 
 <!-- POPUP -->
@@ -43,7 +22,7 @@
     <h2>Hacer Pedido</h2>
 
     <label>Nombre:</label>
-    <input type="text" id="nombre" required>
+    <input type="text" id="nombreCliente" required>
 
     <label>Producto:</label>
     <input type="text" id="producto" readonly>
@@ -58,15 +37,11 @@
 
     <button type="submit">Enviar Pedido</button>
     <button type="button" onclick="cerrarFormulario()">Cancelar</button>
-
-    <div id="productos"></div>
-
-<script type="module" src="script.js"></script>
-
   </form>
 </div>
 
-<script src="script.js"></script>
+<!--  Script correctamente colocado -->
+<script type="module" src="script.js"></script>
 
 </body>
 </html>

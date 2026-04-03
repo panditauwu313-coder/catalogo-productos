@@ -1,7 +1,6 @@
-import { db } from "./firebase.js";
-import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
 window.agregarProducto = async function () {
+  console.log("click detectado"); // 👈 aquí sí
+
   const nombre = document.getElementById("nombre").value;
   const precio = document.getElementById("precio").value;
 
@@ -20,5 +19,3 @@ window.agregarProducto = async function () {
   document.getElementById("nombre").value = "";
   document.getElementById("precio").value = "";
 };
-
-console.log("click detectado");

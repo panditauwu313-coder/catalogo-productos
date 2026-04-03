@@ -60,3 +60,27 @@ window.onclick = function(e) {
     cerrarFormulario();
   }
 };
+
+import { db } from "./firebase.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const contenedor = document.getElementById("productos");
+
+async function cargarProductos() {
+  const querySnapshot = await getDocs(collection(db, "productos"));
+
+  contenedor.innerHTML = "";
+
+  querySnapshot.forEach((doc) => {
+    const producto = doc.data();
+
+    contenedor.innerHTML += `
+      <div style="border:1px solid #ccc; padding:10px; margin:10px;">
+        <h3>${producto.nombre}</h3>
+        <p>$${producto.precio}</p>
+      </div>
+    `;
+  });
+}
+
+cargarProductos();

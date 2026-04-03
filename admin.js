@@ -20,3 +20,5 @@ window.agregarProducto = async function () {
   document.getElementById("nombre").value = "";
   document.getElementById("precio").value = "";
 };
+
+console.log("click detectado");

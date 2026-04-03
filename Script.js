@@ -1,6 +1,39 @@
-let precioActual = 0;
+// 🔥 IMPORTS FIREBASE
+import { db } from "./firebase.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
-function abrirFormulario(producto, precio) {
+// 🔥 VARIABLES
+let precioActual = 0;
+const contenedor = document.getElementById("productos");
+
+// 🔥 CARGAR PRODUCTOS DESDE FIREBASE
+async function cargarProductos() {
+  contenedor.innerHTML = "<p>Cargando...</p>";
+
+  const querySnapshot = await getDocs(collection(db, "productos"));
+
+  contenedor.innerHTML = "";
+
+  querySnapshot.forEach((doc) => {
+    const producto = doc.data();
+
+    contenedor.innerHTML += `
+      <div class="product-card">
+        <img src="https://via.placeholder.com/150">
+        <h2>${producto.nombre}</h2>
+        <p class="price">$${producto.precio}</p>
+        <button onclick="abrirFormulario('${producto.nombre}', ${producto.precio})">
+          Pedir
+        </button>
+      </div>
+    `;
+  });
+}
+
+cargarProductos();
+
+// 🔥 FORMULARIO
+window.abrirFormulario = function(producto, precio) {
   document.getElementById("formPopup").style.display = "flex";
 
   document.getElementById("producto").value = producto;
@@ -9,11 +42,11 @@ function abrirFormulario(producto, precio) {
   precioActual = precio;
 
   actualizarTotal();
-}
+};
 
-function cerrarFormulario() {
+window.cerrarFormulario = function() {
   document.getElementById("formPopup").style.display = "none";
-}
+};
 
 function actualizarTotal() {
   const cantidad = document.getElementById("cantidad").value;
@@ -24,10 +57,11 @@ function actualizarTotal() {
 
 document.getElementById("cantidad").addEventListener("input", actualizarTotal);
 
+// 🔥 ENVÍO A WHATSAPP (ESTO ES LO QUE TE FALTABA INTEGRAR BIEN)
 document.getElementById("pedidoForm").addEventListener("submit", function(e) {
   e.preventDefault();
 
-  const nombre = document.getElementById("nombre").value;
+  const nombre = document.getElementById("nombreCliente").value;
   const producto = document.getElementById("producto").value;
   const cantidad = document.getElementById("cantidad").value;
   const notas = document.getElementById("notas").value;
@@ -43,7 +77,8 @@ Cantidad: ${cantidad}
 Total: $${total}
 Notas: ${notas}`;
 
-  const numero = "993 277 5108"; //  numero 
+  // ⚠️ IMPORTANTE: SIN espacios
+  const numero = "9932775108";
 
   const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
 
@@ -60,27 +95,3 @@ window.onclick = function(e) {
     cerrarFormulario();
   }
 };
-
-import { db } from "./firebase.js";
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const contenedor = document.getElementById("productos");
-
-async function cargarProductos() {
-  const querySnapshot = await getDocs(collection(db, "productos"));
-
-  contenedor.innerHTML = "";
-
-  querySnapshot.forEach((doc) => {
-    const producto = doc.data();
-
-    contenedor.innerHTML += `
-      <div style="border:1px solid #ccc; padding:10px; margin:10px;">
-        <h3>${producto.nombre}</h3>
-        <p>$${producto.precio}</p>
-      </div>
-    `;
-  });
-}
-
-cargarProductos();

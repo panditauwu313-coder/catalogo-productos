@@ -2,45 +2,29 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catálogo de Productos</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Catálogo</title>
 </head>
 <body>
 
-<header>
-  <h1>Catálogo de Productos</h1>
-</header>
+<h1>Catálogo</h1>
 
-<section class="catalogo" id="productos">
-  <!--  Aquí se cargarán los productos dinámicamente -->
-</section>
+<div id="productos"></div>
 
 <!-- POPUP -->
-<div id="formPopup" class="form-popup">
+<div id="formPopup" style="display:none;">
   <form id="pedidoForm">
-    <h2>Hacer Pedido</h2>
-
-    <label>Nombre:</label>
-    <input type="text" id="nombreCliente" required>
-
-    <label>Producto:</label>
+    <input type="text" id="nombreCliente" placeholder="Tu nombre" required>
     <input type="text" id="producto" readonly>
-
-    <label>Cantidad:</label>
-    <input type="number" id="cantidad" min="1" value="1" required>
-
-    <p id="total">Total: $0</p>
-
-    <label>Notas:</label>
+    <input type="number" id="cantidad" value="1" min="1">
     <textarea id="notas"></textarea>
 
-    <button type="submit">Enviar Pedido</button>
+    <p id="total"></p>
+
+    <button type="submit">Pedir</button>
     <button type="button" onclick="cerrarFormulario()">Cancelar</button>
   </form>
 </div>
 
-<!--  Script correctamente colocado -->
 <script type="module" src="script.js"></script>
 
 </body>

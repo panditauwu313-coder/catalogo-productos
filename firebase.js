@@ -1,6 +1,4 @@
-import "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js";
-import "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js";
-
+// SIN imports, TODO global
 const firebaseConfig = {
   apiKey: "AIzaSyD8Q5INY_EfTlyKp_vlnJZP9xWeqH_QhBg",
   authDomain: "catalogo-farid.firebaseapp.com",
@@ -11,7 +9,6 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.firestore();
 
 export { db };

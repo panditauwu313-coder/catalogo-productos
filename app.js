@@ -1,29 +1,72 @@
-import { db } from "./firebase.js";
+// Inicializar Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyD8Q5INY_EfTlyKp_vlnJZP9xWeqH_QhBg",
+  authDomain: "catalogo-farid.firebaseapp.com",
+  projectId: "catalogo-farid",
+  storageBucket: "catalogo-farid.appspot.com",
+  messagingSenderId: "603623739227",
+  appId: "1:603623739227:web:9367d301443e5978a1147e"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 let carrito = [];
 
-const productosRef = db.collection("productos");
+// Esperar a que cargue el DOM
+document.addEventListener("DOMContentLoaded", () => {
 
-// 🔥 TIEMPO REAL
-productosRef.onSnapshot((snapshot) => {
-  let productos = [];
+  const productosRef = db.collection("productos");
 
-  snapshot.forEach(docu => {
-    productos.push({ id: docu.id, ...docu.data() });
+  // Mostrar productos en tiempo real
+  productosRef.onSnapshot((snapshot) => {
+    const contenedor = document.getElementById("productos");
+    contenedor.innerHTML = "";
+
+    const busqueda = document.getElementById("busqueda").value.toLowerCase();
+    const categoria = document.getElementById("categoria").value;
+
+    snapshot.forEach(docu => {
+      const p = docu.data();
+      if (
+        p.nombre.toLowerCase().includes(busqueda) &&
+        (categoria === "todos" || p.categoria === categoria)
+      ) {
+        contenedor.innerHTML += `
+        <div class="card">
+          <img src="${p.imagen}">
+          <h3>${p.nombre}</h3>
+          <p>$${p.precio}</p>
+          <p>Stock: ${p.stock}</p>
+          <button onclick="agregarCarrito('${docu.id}', ${p.stock})">Pedir</button>
+        </div>`;
+      }
+    });
   });
 
-  mostrarProductos(productos);
+  // Filtrado al escribir o cambiar categoría
+  document.getElementById("busqueda").addEventListener("input", () => {
+    productosRef.get().then(snapshot => {
+      mostrarProductos(snapshot);
+    });
+  });
+
+  document.getElementById("categoria").addEventListener("change", () => {
+    productosRef.get().then(snapshot => {
+      mostrarProductos(snapshot);
+    });
+  });
 });
 
-// 🔥 MOSTRAR PRODUCTOS
-function mostrarProductos(productos) {
-  let contenedor = document.getElementById("productos");
+// Funciones del carrito
+function mostrarProductos(snapshot) {
+  const contenedor = document.getElementById("productos");
   contenedor.innerHTML = "";
+  const busqueda = document.getElementById("busqueda").value.toLowerCase();
+  const categoria = document.getElementById("categoria").value;
 
-  let busqueda = document.getElementById("busqueda").value.toLowerCase();
-  let categoria = document.getElementById("categoria").value;
-
-  productos.forEach(p => {
+  snapshot.forEach(docu => {
+    const p = docu.data();
     if (
       p.nombre.toLowerCase().includes(busqueda) &&
       (categoria === "todos" || p.categoria === categoria)
@@ -34,13 +77,12 @@ function mostrarProductos(productos) {
         <h3>${p.nombre}</h3>
         <p>$${p.precio}</p>
         <p>Stock: ${p.stock}</p>
-        <button onclick="agregarCarrito('${p.id}', ${p.stock})">Pedir</button>
+        <button onclick="agregarCarrito('${docu.id}', ${p.stock})">Pedir</button>
       </div>`;
     }
   });
 }
 
-// 🔥 AGREGAR AL CARRITO
 window.agregarCarrito = async (id, stock) => {
   if (stock <= 0) {
     alert("Sin stock");
@@ -52,34 +94,26 @@ window.agregarCarrito = async (id, stock) => {
   });
 
   carrito.push({ id });
-
   mostrarCarrito();
 };
 
-// 🔥 MOSTRAR CARRITO
 function mostrarCarrito() {
-  let lista = document.getElementById("listaCarrito");
-  let total = 0;
+  const lista = document.getElementById("listaCarrito");
   lista.innerHTML = "";
-
   carrito.forEach(p => {
     lista.innerHTML += `<p>Producto ID: ${p.id}</p>`;
   });
-
-  document.getElementById("total").innerText = total;
+  document.getElementById("total").innerText = carrito.length;
 }
 
-// 🔥 HACER PEDIDO
 window.hacerPedido = async () => {
   let mensaje = "Pedido:\n";
-
   carrito.forEach(p => {
     mensaje += `Producto ID: ${p.id}\n`;
   });
 
-  let numero = "9932775108";
-  let url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-
+  const numero = "9932775108";
+  const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
 
   await db.collection("pedidos").add({
@@ -90,24 +124,3 @@ window.hacerPedido = async () => {
   carrito = [];
   mostrarCarrito();
 };
-
-// 🔥 FILTROS
-document.getElementById("busqueda").addEventListener("input", () => {
-  productosRef.get().then(snapshot => {
-    let productos = [];
-    snapshot.forEach(docu => {
-      productos.push({ id: docu.id, ...docu.data() });
-    });
-    mostrarProductos(productos);
-  });
-});
-
-document.getElementById("categoria").addEventListener("change", () => {
-  productosRef.get().then(snapshot => {
-    let productos = [];
-    snapshot.forEach(docu => {
-      productos.push({ id: docu.id, ...docu.data() });
-    });
-    mostrarProductos(productos);
-  });
-});

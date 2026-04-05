@@ -18,12 +18,12 @@
 <div id="productos"></div>
 
 <script type="module">
-import { db, collection, addDoc, onSnapshot, doc, updateDoc } from "./firebase.js";
+import { db } from "./firebase.js";
 
-const productosRef = collection(db, "productos");
+const productosRef = db.collection("productos");
 
 window.agregarProducto = async () => {
-  await addDoc(productosRef, {
+  await productosRef.add({
     nombre: nombre.value,
     precio: parseFloat(precio.value),
     imagen: imagen.value,
@@ -32,7 +32,7 @@ window.agregarProducto = async () => {
   });
 };
 
-onSnapshot(productosRef, (snapshot) => {
+productosRef.onSnapshot((snapshot) => {
   let div = document.getElementById("productos");
   div.innerHTML = "";
 
@@ -49,8 +49,9 @@ onSnapshot(productosRef, (snapshot) => {
 });
 
 window.editar = async (id, campo, valor) => {
-  const ref = doc(db, "productos", id);
-  await updateDoc(ref, { [campo]: valor });
+  await db.collection("productos").doc(id).update({
+    [campo]: valor
+  });
 };
 </script>
 

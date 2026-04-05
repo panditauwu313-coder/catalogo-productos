@@ -1,13 +1,11 @@
-import { db, collection, addDoc, getDocs, updateDoc, doc, onSnapshot } from "./firebase.js";
+import { db } from "./firebase.js";
 
-// 🔥 Carrito
 let carrito = [];
 
-// 🔥 Referencia a Firebase
-const productosRef = collection(db, "productos");
+const productosRef = db.collection("productos");
 
 // 🔥 TIEMPO REAL
-onSnapshot(productosRef, (snapshot) => {
+productosRef.onSnapshot((snapshot) => {
   let productos = [];
 
   snapshot.forEach(docu => {
@@ -17,7 +15,7 @@ onSnapshot(productosRef, (snapshot) => {
   mostrarProductos(productos);
 });
 
-// 🔥 MOSTRAR PRODUCTOS CON FILTROS
+// 🔥 MOSTRAR PRODUCTOS
 function mostrarProductos(productos) {
   let contenedor = document.getElementById("productos");
   contenedor.innerHTML = "";
@@ -42,16 +40,14 @@ function mostrarProductos(productos) {
   });
 }
 
-// 🔥 AGREGAR AL CARRITO (con Firebase)
+// 🔥 AGREGAR AL CARRITO
 window.agregarCarrito = async (id, stock) => {
   if (stock <= 0) {
     alert("Sin stock");
     return;
   }
 
-  const ref = doc(db, "productos", id);
-
-  await updateDoc(ref, {
+  await db.collection("productos").doc(id).update({
     stock: stock - 1
   });
 
@@ -73,7 +69,7 @@ function mostrarCarrito() {
   document.getElementById("total").innerText = total;
 }
 
-// 🔥 HACER PEDIDO (WhatsApp + Firebase)
+// 🔥 HACER PEDIDO
 window.hacerPedido = async () => {
   let mensaje = "Pedido:\n";
 
@@ -81,13 +77,12 @@ window.hacerPedido = async () => {
     mensaje += `Producto ID: ${p.id}\n`;
   });
 
-  let numero = "9932775108"; // CAMBIA ESTO
+  let numero = "9932775108";
   let url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
 
   window.open(url, "_blank");
 
-  // 🔥 Guardar pedido en Firebase
-  await addDoc(collection(db, "pedidos"), {
+  await db.collection("pedidos").add({
     carrito,
     fecha: new Date()
   });
@@ -96,9 +91,9 @@ window.hacerPedido = async () => {
   mostrarCarrito();
 };
 
-// 🔥 EVENTOS FILTROS
+// 🔥 FILTROS
 document.getElementById("busqueda").addEventListener("input", () => {
-  getDocs(productosRef).then(snapshot => {
+  productosRef.get().then(snapshot => {
     let productos = [];
     snapshot.forEach(docu => {
       productos.push({ id: docu.id, ...docu.data() });
@@ -108,7 +103,7 @@ document.getElementById("busqueda").addEventListener("input", () => {
 });
 
 document.getElementById("categoria").addEventListener("change", () => {
-  getDocs(productosRef).then(snapshot => {
+  productosRef.get().then(snapshot => {
     let productos = [];
     snapshot.forEach(docu => {
       productos.push({ id: docu.id, ...docu.data() });

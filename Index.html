@@ -1,32 +1,34 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <link rel="stylesheet" href="style.css">
-  <title>Catálogo</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <h1>Catálogo</h1>
 
-<div id="productos"></div>
+<input type="text" id="busqueda" placeholder="Buscar producto exacto...">
 
-<!-- POPUP -->
-<div id="formPopup" style="display:none;">
-  <form id="pedidoForm">
-    <input type="text" id="nombreCliente" placeholder="Tu nombre" required>
-    <input type="text" id="producto" readonly>
-    <input type="number" id="cantidad" value="1" min="1">
-    <textarea id="notas"></textarea>
+<select id="categoria">
+<option value="todos">Todas las categorías</option>
+<option value="chocolates">Chocolates</option>
+<option value="sabritas">Sabritas</option>
+<option value="jugos">Jugos</option>
+</select>
 
-    <p id="total"></p>
+<div id="productos" class="catalogo"></div>
 
-    <button type="submit">Pedir</button>
-    <button type="button" onclick="cerrarFormulario()">Cancelar</button>
-  </form>
+<!-- CARRITO -->
+<div class="carrito">
+<h2>Carrito</h2>
+<div id="listaCarrito"></div>
+<p>Total: $<span id="total">0</span></p>
+<button onclick="hacerPedido()">Hacer Pedido</button>
 </div>
 
-<script type="module" src="script.js"></script>
-
+<script type="module" src="app.js"></script>
 </body>
 </html>

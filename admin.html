@@ -1,24 +1,58 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin</title>
+<meta charset="UTF-8">
+<title>Admin</title>
 </head>
 <body>
 
-<h1>Panel Admin</h1>
+<h1>Admin</h1>
 
-<input type="text" id="nombre" placeholder="Nombre">
-<input type="number" id="precio" placeholder="Precio">
-<input type="number" id="stock" placeholder="Stock">
-<input type="text" id="imagen" placeholder="Link de imagen">
-
+<input id="nombre" placeholder="Nombre">
+<input id="precio" type="number" placeholder="Precio">
+<input id="imagen" placeholder="URL Imagen">
+<input id="categoria" placeholder="Categoria">
+<input id="stock" type="number" placeholder="Stock">
 <button onclick="agregarProducto()">Agregar</button>
 
-<h2>Productos</h2>
-<div id="listaProductos"></div>
+<div id="productos"></div>
 
-<script type="module" src="admin.js"></script>
+<script type="module">
+import { db, collection, addDoc, onSnapshot, doc, updateDoc } from "./firebase.js";
+
+const productosRef = collection(db, "productos");
+
+window.agregarProducto = async () => {
+  await addDoc(productosRef, {
+    nombre: nombre.value,
+    precio: parseFloat(precio.value),
+    imagen: imagen.value,
+    categoria: categoria.value,
+    stock: parseInt(stock.value)
+  });
+};
+
+onSnapshot(productosRef, (snapshot) => {
+  let div = document.getElementById("productos");
+  div.innerHTML = "";
+
+  snapshot.forEach(docu => {
+    let p = docu.data();
+
+    div.innerHTML += `
+    <div>
+      <input value="${p.nombre}" onchange="editar('${docu.id}','nombre',this.value)">
+      <input value="${p.precio}" onchange="editar('${docu.id}','precio',this.value)">
+      <input value="${p.stock}" onchange="editar('${docu.id}','stock',this.value)">
+    </div>`;
+  });
+});
+
+window.editar = async (id, campo, valor) => {
+  const ref = doc(db, "productos", id);
+  await updateDoc(ref, { [campo]: valor });
+};
+</script>
 
 </body>
 </html>

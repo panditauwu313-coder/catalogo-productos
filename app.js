@@ -1,123 +1,93 @@
-// Inicializar Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyD8Q5INY_EfTlyKp_vlnJZP9xWeqH_QhBg",
-  authDomain: "catalogo-farid.firebaseapp.com",
-  projectId: "catalogo-farid",
-  storageBucket: "catalogo-farid.appspot.com",
-  messagingSenderId: "603623739227",
-  appId: "1:603623739227:web:9367d301443e5978a1147e"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+import { db, collection, addDoc, updateDoc, doc, onSnapshot } from "./firebase.js";
 
 let carrito = [];
+let productosGlobal = [];
 
-// Esperar a que cargue el DOM
-document.addEventListener("DOMContentLoaded", () => {
+const productosRef = collection(db, "productos");
+const categoriasRef = collection(db, "categorias");
 
-  const productosRef = db.collection("productos");
+// CATEGORÍAS DINÁMICAS
+onSnapshot(categoriasRef, snap => {
+  let select = document.getElementById("categoria");
+  select.innerHTML = `<option value="todos">Todas</option>`;
 
-  // Mostrar productos en tiempo real
-  productosRef.onSnapshot((snapshot) => {
-    const contenedor = document.getElementById("productos");
-    contenedor.innerHTML = "";
-
-    const busqueda = document.getElementById("busqueda").value.toLowerCase();
-    const categoria = document.getElementById("categoria").value;
-
-    snapshot.forEach(docu => {
-      const p = docu.data();
-      if (
-        p.nombre.toLowerCase().includes(busqueda) &&
-        (categoria === "todos" || p.categoria === categoria)
-      ) {
-        contenedor.innerHTML += `
-        <div class="card">
-          <img src="${p.imagen}">
-          <h3>${p.nombre}</h3>
-          <p>$${p.precio}</p>
-          <p>Stock: ${p.stock}</p>
-          <button onclick="agregarCarrito('${docu.id}', ${p.stock})">Pedir</button>
-        </div>`;
-      }
-    });
-  });
-
-  // Filtrado al escribir o cambiar categoría
-  document.getElementById("busqueda").addEventListener("input", () => {
-    productosRef.get().then(snapshot => {
-      mostrarProductos(snapshot);
-    });
-  });
-
-  document.getElementById("categoria").addEventListener("change", () => {
-    productosRef.get().then(snapshot => {
-      mostrarProductos(snapshot);
-    });
+  snap.forEach(docu => {
+    select.innerHTML += `<option value="${docu.data().nombre}">${docu.data().nombre}</option>`;
   });
 });
 
-// Funciones del carrito
-function mostrarProductos(snapshot) {
-  const contenedor = document.getElementById("productos");
-  contenedor.innerHTML = "";
-  const busqueda = document.getElementById("busqueda").value.toLowerCase();
-  const categoria = document.getElementById("categoria").value;
+// PRODUCTOS
+onSnapshot(productosRef, snap => {
+  productosGlobal = [];
+  snap.forEach(docu => {
+    productosGlobal.push({ id: docu.id, ...docu.data() });
+  });
+  mostrarProductos();
+});
 
-  snapshot.forEach(docu => {
-    const p = docu.data();
-    if (
-      p.nombre.toLowerCase().includes(busqueda) &&
-      (categoria === "todos" || p.categoria === categoria)
-    ) {
-      contenedor.innerHTML += `
+function mostrarProductos() {
+  let cont = document.getElementById("productos");
+  cont.innerHTML = "";
+
+  let filtro = document.getElementById("categoria").value;
+
+  productosGlobal.forEach(p => {
+    if (filtro === "todos" || p.categoria === filtro) {
+      cont.innerHTML += `
       <div class="card">
         <img src="${p.imagen}">
         <h3>${p.nombre}</h3>
         <p>$${p.precio}</p>
         <p>Stock: ${p.stock}</p>
-        <button onclick="agregarCarrito('${docu.id}', ${p.stock})">Pedir</button>
+        <button onclick="agregar('${p.id}', ${p.stock})">Pedir</button>
       </div>`;
     }
   });
 }
 
-window.agregarCarrito = async (id, stock) => {
-  if (stock <= 0) {
-    alert("Sin stock");
-    return;
-  }
+document.getElementById("categoria").addEventListener("change", mostrarProductos);
 
-  await db.collection("productos").doc(id).update({
+window.agregar = async (id, stock) => {
+  if (stock <= 0) return alert("Sin stock");
+
+  let producto = productosGlobal.find(p => p.id === id);
+
+  carrito.push(producto);
+
+  await updateDoc(doc(db, "productos", id), {
     stock: stock - 1
   });
 
-  carrito.push({ id });
   mostrarCarrito();
 };
 
 function mostrarCarrito() {
-  const lista = document.getElementById("listaCarrito");
+  let lista = document.getElementById("listaCarrito");
+  let total = 0;
+
   lista.innerHTML = "";
+
   carrito.forEach(p => {
-    lista.innerHTML += `<p>Producto ID: ${p.id}</p>`;
+    lista.innerHTML += `<p>${p.nombre} - $${p.precio}</p>`;
+    total += p.precio;
   });
-  document.getElementById("total").innerText = carrito.length;
+
+  document.getElementById("total").innerText = total;
 }
 
 window.hacerPedido = async () => {
-  let mensaje = "Pedido:\n";
-  carrito.forEach(p => {
-    mensaje += `Producto ID: ${p.id}\n`;
-  });
+  let total = document.getElementById("total").innerText;
 
-  const numero = "9932775108";
-  const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-  window.open(url, "_blank");
+  let detalle = carrito.map(p => `${p.nombre} ($${p.precio})`).join("\n");
 
-  await db.collection("pedidos").add({
-    carrito,
+  let mensaje = `Pedido:\n${detalle}\nTotal: $${total}`;
+
+  let numero = "521XXXXXXXXXX";
+  window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`);
+
+  await addDoc(collection(db, "pedidos"), {
+    productos: carrito,
+    total,
     fecha: new Date()
   });
 

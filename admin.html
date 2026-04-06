@@ -6,53 +6,116 @@
 </head>
 <body>
 
-<h1>Admin</h1>
+<h1>Panel Admin</h1>
 
+<h2>Crear Categoría</h2>
+<input id="nuevaCategoria">
+<button onclick="crearCategoria()">Crear</button>
+
+<h2>Agregar Producto</h2>
 <input id="nombre" placeholder="Nombre">
 <input id="precio" type="number" placeholder="Precio">
 <input id="imagen" placeholder="URL Imagen">
-<input id="categoria" placeholder="Categoria">
 <input id="stock" type="number" placeholder="Stock">
+<select id="categoriaSelect"></select>
 <button onclick="agregarProducto()">Agregar</button>
 
+<h2>Productos</h2>
 <div id="productos"></div>
 
+<h2>Pedidos</h2>
+<div id="pedidos"></div>
+
+<h2>Reporte de ventas</h2>
+<div id="reporte"></div>
+
 <script type="module">
-import { db } from "./firebase.js";
+import { db, collection, addDoc, onSnapshot, doc, updateDoc } from "./firebase.js";
 
-const productosRef = db.collection("productos");
+const productosRef = collection(db, "productos");
+const categoriasRef = collection(db, "categorias");
+const pedidosRef = collection(db, "pedidos");
 
+// CATEGORÍAS
+window.crearCategoria = async () => {
+  if (!nuevaCategoria.value) return alert("Pon nombre");
+  await addDoc(categoriasRef, { nombre: nuevaCategoria.value });
+};
+
+// CARGAR CATEGORÍAS
+onSnapshot(categoriasRef, snap => {
+  let select = document.getElementById("categoriaSelect");
+  select.innerHTML = "";
+
+  snap.forEach(docu => {
+    select.innerHTML += `<option value="${docu.data().nombre}">${docu.data().nombre}</option>`;
+  });
+});
+
+// AGREGAR PRODUCTO
 window.agregarProducto = async () => {
-  await productosRef.add({
+  if (!categoriaSelect.value) return alert("Selecciona categoría");
+
+  await addDoc(productosRef, {
     nombre: nombre.value,
     precio: parseFloat(precio.value),
     imagen: imagen.value,
-    categoria: categoria.value,
-    stock: parseInt(stock.value)
+    stock: parseInt(stock.value),
+    categoria: categoriaSelect.value
   });
 };
 
-productosRef.onSnapshot((snapshot) => {
+// MOSTRAR PRODUCTOS
+onSnapshot(productosRef, snap => {
   let div = document.getElementById("productos");
   div.innerHTML = "";
 
-  snapshot.forEach(docu => {
+  snap.forEach(docu => {
     let p = docu.data();
 
     div.innerHTML += `
     <div>
       <input value="${p.nombre}" onchange="editar('${docu.id}','nombre',this.value)">
       <input value="${p.precio}" onchange="editar('${docu.id}','precio',this.value)">
+      <input value="${p.imagen}" onchange="editar('${docu.id}','imagen',this.value)">
       <input value="${p.stock}" onchange="editar('${docu.id}','stock',this.value)">
+      <input value="${p.categoria}" onchange="editar('${docu.id}','categoria',this.value)">
     </div>`;
   });
 });
 
+// EDITAR
 window.editar = async (id, campo, valor) => {
-  await db.collection("productos").doc(id).update({
-    [campo]: valor
+  await updateDoc(doc(db, "productos", id), {
+    [campo]: campo === "precio" || campo === "stock" ? Number(valor) : valor
   });
 };
+
+// PEDIDOS
+onSnapshot(pedidosRef, snap => {
+  let div = document.getElementById("pedidos");
+  let reporte = {};
+
+  div.innerHTML = "";
+
+  snap.forEach(docu => {
+    let p = docu.data();
+
+    div.innerHTML += `<p>Total: $${p.total}</p>`;
+
+    p.productos.forEach(prod => {
+      reporte[prod.nombre] = (reporte[prod.nombre] || 0) + 1;
+    });
+  });
+
+  // REPORTE
+  let repDiv = document.getElementById("reporte");
+  repDiv.innerHTML = "<h3>Ventas:</h3>";
+
+  for (let nombre in reporte) {
+    repDiv.innerHTML += `<p>${nombre}: ${reporte[nombre]}</p>`;
+  }
+});
 </script>
 
 </body>

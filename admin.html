@@ -24,19 +24,21 @@
 <div id="productos"></div>
 
 <h2>Pedidos</h2>
+<button onclick="borrarPedidos()">Borrar pedidos</button>
 <div id="pedidos"></div>
 
 <h2>Reporte de ventas</h2>
+<button onclick="reiniciarReporte()">Reiniciar reporte</button>
 <div id="reporte"></div>
 
 <script type="module">
-import { db, collection, addDoc, onSnapshot, doc, updateDoc } from "./firebase.js";
+import { db, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDocs } from "./firebase.js";
 
 const productosRef = collection(db, "productos");
 const categoriasRef = collection(db, "categorias");
 const pedidosRef = collection(db, "pedidos");
 
-// CATEGORÍAS
+// CREAR CATEGORÍA
 window.crearCategoria = async () => {
   if (!nuevaCategoria.value) return alert("Pon nombre");
   await addDoc(categoriasRef, { nombre: nuevaCategoria.value });
@@ -65,7 +67,7 @@ window.agregarProducto = async () => {
   });
 };
 
-// MOSTRAR PRODUCTOS
+// MOSTRAR PRODUCTOS (NO TOCADO, SOLO BOTÓN EXTRA)
 onSnapshot(productosRef, snap => {
   let div = document.getElementById("productos");
   div.innerHTML = "";
@@ -80,18 +82,24 @@ onSnapshot(productosRef, snap => {
       <input value="${p.imagen}" onchange="editar('${docu.id}','imagen',this.value)">
       <input value="${p.stock}" onchange="editar('${docu.id}','stock',this.value)">
       <input value="${p.categoria}" onchange="editar('${docu.id}','categoria',this.value)">
+      <button onclick="eliminarProducto('${docu.id}')">Eliminar</button>
     </div>`;
   });
 });
 
-// EDITAR
+// EDITAR (IGUAL)
 window.editar = async (id, campo, valor) => {
   await updateDoc(doc(db, "productos", id), {
     [campo]: campo === "precio" || campo === "stock" ? Number(valor) : valor
   });
 };
 
-// PEDIDOS
+// ELIMINAR PRODUCTO
+window.eliminarProducto = async (id) => {
+  await deleteDoc(doc(db, "productos", id));
+};
+
+// PEDIDOS + REPORTE (IGUAL)
 onSnapshot(pedidosRef, snap => {
   let div = document.getElementById("pedidos");
   let reporte = {};
@@ -108,7 +116,6 @@ onSnapshot(pedidosRef, snap => {
     });
   });
 
-  // REPORTE
   let repDiv = document.getElementById("reporte");
   repDiv.innerHTML = "<h3>Ventas:</h3>";
 
@@ -116,6 +123,24 @@ onSnapshot(pedidosRef, snap => {
     repDiv.innerHTML += `<p>${nombre}: ${reporte[nombre]}</p>`;
   }
 });
+
+// BORRAR PEDIDOS
+window.borrarPedidos = async () => {
+  let snap = await getDocs(pedidosRef);
+
+  snap.forEach(async (d) => {
+    await deleteDoc(doc(db, "pedidos", d.id));
+  });
+};
+
+// REINICIAR REPORTE
+window.reiniciarReporte = async () => {
+  let snap = await getDocs(pedidosRef);
+
+  snap.forEach(async (d) => {
+    await deleteDoc(doc(db, "pedidos", d.id));
+  });
+};
 </script>
 
 </body>

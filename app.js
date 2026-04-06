@@ -1,4 +1,4 @@
-import { db, collection, addDoc, updateDoc, doc, onSnapshot } from "./firebase.js";
+import { db, collection, addDoc, updateDoc, doc, onSnapshot, getDocs } from "./firebase.js";
 
 let carrito = [];
 let productosGlobal = [];
@@ -6,7 +6,7 @@ let productosGlobal = [];
 const productosRef = collection(db, "productos");
 const categoriasRef = collection(db, "categorias");
 
-// CATEGORÍAS DINÁMICAS
+// CATEGORÍAS
 onSnapshot(categoriasRef, snap => {
   let select = document.getElementById("categoria");
   select.innerHTML = `<option value="todos">Todas</option>`;
@@ -25,42 +25,50 @@ onSnapshot(productosRef, snap => {
   mostrarProductos();
 });
 
+// MOSTRAR PRODUCTOS
 function mostrarProductos() {
   let cont = document.getElementById("productos");
   cont.innerHTML = "";
 
   let filtro = document.getElementById("categoria").value;
+  let busqueda = document.getElementById("busqueda")?.value?.toLowerCase() || "";
 
   productosGlobal.forEach(p => {
-    if (filtro === "todos" || p.categoria === filtro) {
+    if (
+      (filtro === "todos" || p.categoria === filtro) &&
+      p.nombre.toLowerCase().includes(busqueda)
+    ) {
       cont.innerHTML += `
       <div class="card">
         <img src="${p.imagen}">
         <h3>${p.nombre}</h3>
         <p>$${p.precio}</p>
         <p>Stock: ${p.stock}</p>
-        <button onclick="agregar('${p.id}', ${p.stock})">Pedir</button>
+        <button onclick="agregar('${p.id}')">Pedir</button>
       </div>`;
     }
   });
 }
 
+// EVENTOS
 document.getElementById("categoria").addEventListener("change", mostrarProductos);
 
-window.agregar = async (id, stock) => {
-  if (stock <= 0) return alert("Sin stock");
+// BUSCADOR
+if (document.getElementById("busqueda")) {
+  document.getElementById("busqueda").addEventListener("input", mostrarProductos);
+}
 
+// AGREGAR AL CARRITO (YA NO TOCA STOCK)
+window.agregar = (id) => {
   let producto = productosGlobal.find(p => p.id === id);
 
+  if (producto.stock <= 0) return alert("Sin stock");
+
   carrito.push(producto);
-
-  await updateDoc(doc(db, "productos", id), {
-    stock: stock - 1
-  });
-
   mostrarCarrito();
 };
 
+// MOSTRAR CARRITO
 function mostrarCarrito() {
   let lista = document.getElementById("listaCarrito");
   let total = 0;
@@ -75,7 +83,10 @@ function mostrarCarrito() {
   document.getElementById("total").innerText = total;
 }
 
+// HACER PEDIDO (AQUÍ SE DESCUENTA STOCK)
 window.hacerPedido = async () => {
+  if (carrito.length === 0) return alert("Carrito vacío");
+
   let total = document.getElementById("total").innerText;
 
   let detalle = carrito.map(p => `${p.nombre} ($${p.precio})`).join("\n");
@@ -85,6 +96,17 @@ window.hacerPedido = async () => {
   let numero = "521XXXXXXXXXX";
   window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`);
 
+  // 🔥 DESCONTAR STOCK AQUÍ
+  for (let item of carrito) {
+    let ref = doc(db, "productos", item.id);
+    let nuevoStock = item.stock - 1;
+
+    if (nuevoStock < 0) nuevoStock = 0;
+
+    await updateDoc(ref, { stock: nuevoStock });
+  }
+
+  // GUARDAR PEDIDO
   await addDoc(collection(db, "pedidos"), {
     productos: carrito,
     total,

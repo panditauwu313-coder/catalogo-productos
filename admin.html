@@ -2,14 +2,63 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin</title>
+
+<style>
+body {
+  font-family: Arial;
+  margin: 10px;
+}
+
+/* Inputs y botones */
+input, select, button {
+  width: 100%;
+  margin: 5px 0;
+  padding: 10px;
+  font-size: 16px;
+}
+
+/* Títulos */
+h1, h2 {
+  font-size: 20px;
+}
+
+/* Tarjetas de productos */
+.producto {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background: #f5f5f5;
+}
+
+/* 📱 Responsive escritorio */
+@media (min-width: 600px) {
+  .producto {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 5px;
+    align-items: center;
+  }
+
+  input, select {
+    width: auto;
+  }
+
+  button {
+    width: auto;
+  }
+}
+</style>
+
 </head>
 <body>
 
-<h1>Panel Admin</h1>
+<h1 style="text-align:center;">Panel Admin</h1>
 
 <h2>Crear Categoría</h2>
-<input id="nuevaCategoria">
+<input id="nuevaCategoria" placeholder="Nombre categoría">
 <button onclick="crearCategoria()">Crear</button>
 
 <h2>Agregar Producto</h2>
@@ -67,7 +116,7 @@ window.agregarProducto = async () => {
   });
 };
 
-// MOSTRAR PRODUCTOS (NO TOCADO, SOLO BOTÓN EXTRA)
+// MOSTRAR PRODUCTOS (OPTIMIZADO)
 onSnapshot(productosRef, snap => {
   let div = document.getElementById("productos");
   div.innerHTML = "";
@@ -76,7 +125,7 @@ onSnapshot(productosRef, snap => {
     let p = docu.data();
 
     div.innerHTML += `
-    <div>
+    <div class="producto">
       <input value="${p.nombre}" onchange="editar('${docu.id}','nombre',this.value)">
       <input value="${p.precio}" onchange="editar('${docu.id}','precio',this.value)">
       <input value="${p.imagen}" onchange="editar('${docu.id}','imagen',this.value)">
@@ -87,7 +136,7 @@ onSnapshot(productosRef, snap => {
   });
 });
 
-// EDITAR (IGUAL)
+// EDITAR
 window.editar = async (id, campo, valor) => {
   await updateDoc(doc(db, "productos", id), {
     [campo]: campo === "precio" || campo === "stock" ? Number(valor) : valor
@@ -99,7 +148,7 @@ window.eliminarProducto = async (id) => {
   await deleteDoc(doc(db, "productos", id));
 };
 
-// PEDIDOS + REPORTE (IGUAL)
+// PEDIDOS + REPORTE
 onSnapshot(pedidosRef, snap => {
   let div = document.getElementById("pedidos");
   let reporte = {};

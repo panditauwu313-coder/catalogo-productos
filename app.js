@@ -93,7 +93,7 @@ window.hacerPedido = async () => {
 
   let mensaje = `Pedido:\n${detalle}\nTotal: $${total}`;
 
-  let numero = "521XXXXXXXXXX"; // TU NÚMERO
+  let numero = "9932775108"; // TU NÚMERO
   window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`);
 
   // 🔥 DESCONTAR STOCK AQUÍ

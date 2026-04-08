@@ -91,7 +91,9 @@ window.hacerPedido = async () => {
 
   let detalle = carrito.map(p => `${p.nombre} ($${p.precio})`).join("\n");
 
-  let mensaje = `Pedido:\n${detalle}\nTotal: $${total}`;
+  let nota = document.getElementById("nota")?.value || "Sin notas";
+
+  let mensaje = `Pedido:\n${detalle}\nTotal: $${total}\nNotas: ${nota}`;
 
   let numero = "9932775108"; // TU NÚMERO
   window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`);
@@ -109,11 +111,12 @@ window.hacerPedido = async () => {
   }
 
   // GUARDAR PEDIDO
-  await addDoc(collection(db, "pedidos"), {
-    productos: carrito,
-    total,
-    fecha: new Date()
-  });
+ await addDoc(collection(db, "pedidos"), {
+  productos: carrito,
+  total,
+  nota: nota,
+  fecha: new Date()
+});
 
   carrito = [];
   mostrarCarrito();

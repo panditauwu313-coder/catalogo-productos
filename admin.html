@@ -2,34 +2,67 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admin</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="admin.css">
 </head>
 <body>
 
-<h1>Panel Admin</h1>
+<header class="header">
+  <div class="container header-inner">
+    <span class="brand">Catálogo<em>.</em> Admin</span>
+  </div>
+</header>
 
-<h2>Crear Categoría</h2>
-<input id="nuevaCategoria">
-<button onclick="crearCategoria()">Crear</button>
+<main class="container admin">
 
-<h2>Agregar Producto</h2>
-<input id="nombre" placeholder="Nombre">
-<input id="precio" type="number" placeholder="Precio">
-<input id="imagen" placeholder="URL Imagen">
-<input id="stock" type="number" placeholder="Stock">
-<select id="categoriaSelect"></select>
-<button onclick="agregarProducto()">Agregar</button>
+  <section class="section">
+    <h2>Categorías</h2>
+    <div class="row">
+      <input id="nuevaCategoria" class="input" placeholder="Nombre de la categoría">
+      <button class="btn btn-primary" onclick="crearCategoria()">Crear</button>
+    </div>
+    <div id="listaCategorias" class="categorias"></div>
+  </section>
 
-<h2>Productos</h2>
-<div id="productos"></div>
+  <section class="section">
+    <h2>Agregar producto</h2>
+    <div class="form">
+      <input id="nombre" class="input" placeholder="Nombre">
+      <input id="precio" class="input" type="number" placeholder="Precio">
+      <input id="imagen" class="input" placeholder="URL de la imagen">
+      <input id="stock" class="input" type="number" placeholder="Stock">
+      <select id="categoriaSelect" class="select"></select>
+      <button class="btn btn-primary" onclick="agregarProducto()">Agregar</button>
+    </div>
+  </section>
 
-<h2>Pedidos</h2>
-<button onclick="borrarPedidos()">Borrar pedidos</button>
-<div id="pedidos"></div>
+  <section class="section">
+    <div class="section-head">
+      <h2>Productos</h2>
+      <span class="hint" id="productosCount"></span>
+    </div>
+    <div id="productos"></div>
+  </section>
 
-<h2>Reporte de ventas</h2>
-<button onclick="borrarReporte()">Reiniciar reporte</button>
-<div id="reporte"></div>
+  <section class="section">
+    <div class="section-head">
+      <h2>Pedidos</h2>
+      <button class="btn btn-danger" onclick="borrarPedidos()">Borrar pedidos</button>
+    </div>
+    <div id="pedidos"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Reporte de ventas</h2>
+      <button class="btn btn-danger" onclick="borrarReporte()">Reiniciar reporte</button>
+    </div>
+    <div id="reporte"></div>
+  </section>
+
+</main>
 
 <script type="module">
 import { db, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDocs } from "./firebase.js";
@@ -38,70 +71,156 @@ const productosRef = collection(db, "productos");
 const categoriasRef = collection(db, "categorias");
 const pedidosRef = collection(db, "pedidos");
 
+const SIN_CATEGORIA = "Sin categoría";
+
+let productos = [];
+let categorias = [];
+
+const $ = id => document.getElementById(id);
+const escapeHTML = s => String(s ?? "").replace(/[&<>"']/g, c => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+}[c]));
+
+const PLACEHOLDER_ICON = `<span class="ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>`;
+
+const imgTag = (src, alt) => src
+  ? `<img src="${escapeHTML(src)}" alt="${escapeHTML(alt)}">`
+  : PLACEHOLDER_ICON;
+
 // CREAR CATEGORÍA
 window.crearCategoria = async () => {
-  if (!nuevaCategoria.value) return alert("Pon nombre");
-  await addDoc(categoriasRef, { nombre: nuevaCategoria.value });
+  const nombre = $("nuevaCategoria").value.trim();
+  if (!nombre) return alert("Pon nombre");
+  if (categorias.some(c => c.nombre.toLowerCase() === nombre.toLowerCase())) return alert("Esa categoría ya existe");
+  await addDoc(categoriasRef, { nombre });
+  $("nuevaCategoria").value = "";
 };
 
-// CARGAR CATEGORÍAS
-onSnapshot(categoriasRef, snap => {
-  let select = document.getElementById("categoriaSelect");
-  select.innerHTML = "";
+// RENDER CATEGORÍAS
+function renderCategorias() {
+  const sel = $("categoriaSelect");
+  sel.innerHTML = categorias.map(c => `<option value="${escapeHTML(c.nombre)}">${escapeHTML(c.nombre)}</option>`).join("") ||
+    `<option value="${SIN_CATEGORIA}">${SIN_CATEGORIA}</option>`;
 
-  snap.forEach(docu => {
-    select.innerHTML += `<option value="${docu.data().nombre}">${docu.data().nombre}</option>`;
-  });
-});
+  const list = $("listaCategorias");
+  list.innerHTML = categorias.length
+    ? categorias.map(c => `
+        <div class="categoria">
+          <span>${escapeHTML(c.nombre)}</span>
+          <button class="btn btn-danger btn-icon" onclick="borrarCategoria('${c.id}')" title="Borrar categoría">&times;</button>
+        </div>`).join("")
+    : `<p class="empty">Sin categorías.</p>`;
+}
+
+// BORRAR CATEGORÍA
+window.borrarCategoria = async (id) => {
+  const cat = categorias.find(c => c.id === id);
+  if (!cat) return;
+  if (!confirm(`¿Borrar la categoría "${cat.nombre}"?\nSus productos pasarán a "${SIN_CATEGORIA}".`)) return;
+
+  const snap = await getDocs(productosRef);
+  for (const d of snap.docs) {
+    if (d.data().categoria === cat.nombre) {
+      await updateDoc(doc(db, "productos", d.id), { categoria: SIN_CATEGORIA });
+    }
+  }
+
+  await deleteDoc(doc(db, "categorias", id));
+};
 
 // AGREGAR PRODUCTO
 window.agregarProducto = async () => {
-  if (!categoriaSelect.value) return alert("Selecciona categoría");
+  if (!$("categoriaSelect").value) return alert("Selecciona categoría");
 
   await addDoc(productosRef, {
-    nombre: nombre.value,
-    precio: parseFloat(precio.value),
-    imagen: imagen.value,
-    stock: parseInt(stock.value),
-    categoria: categoriaSelect.value
+    nombre: $("nombre").value,
+    precio: parseFloat($("precio").value),
+    imagen: $("imagen").value,
+    stock: parseInt($("stock").value),
+    categoria: $("categoriaSelect").value,
+    disponible: true
   });
+
+  ["nombre", "precio", "imagen", "stock"].forEach(id => $(id).value = "");
 };
 
-// MOSTRAR PRODUCTOS
-onSnapshot(productosRef, snap => {
-  let div = document.getElementById("productos");
-  div.innerHTML = "";
+// RENDER PRODUCTOS
+function renderProductos() {
+  const div = $("productos");
+  $("productosCount").innerText = productos.length ? `${productos.length} productos` : "";
 
-  snap.forEach(docu => {
-    let p = docu.data();
+  if (productos.length === 0) {
+    div.innerHTML = `<p class="empty">Sin productos.</p>`;
+    return;
+  }
 
-    div.innerHTML += `
-    <div>
-      <input value="${p.nombre}" onchange="editar('${docu.id}','nombre',this.value)">
-      <input value="${p.precio}" onchange="editar('${docu.id}','precio',this.value)">
-      <input value="${p.imagen}" onchange="editar('${docu.id}','imagen',this.value)">
-      <input value="${p.stock}" onchange="editar('${docu.id}','stock',this.value)">
-      <input value="${p.categoria}" onchange="editar('${docu.id}','categoria',this.value)">
-      <button onclick="eliminarProducto('${docu.id}')">Eliminar</button>
+  div.innerHTML = productos.map(p => {
+    const categoriasSelect = [SIN_CATEGORIA, ...categorias.map(c => c.nombre), p.categoria]
+      .filter((v, i, a) => a.indexOf(v) === i)
+      .map(o => `<option value="${escapeHTML(o)}" ${p.categoria === o ? "selected" : ""}>${escapeHTML(o)}</option>`)
+      .join("");
+
+    return `
+    <div class="producto">
+      <div class="thumb ${p.imagen ? "" : "placeholder"}">${imgTag(p.imagen, p.nombre)}</div>
+      <input class="input" value="${escapeHTML(p.nombre)}" onchange="editar('${p.id}','nombre',this.value)" placeholder="Nombre">
+      <input class="input" value="${escapeHTML(p.precio)}" onchange="editar('${p.id}','precio',this.value)" placeholder="Precio" type="number">
+      <input class="input" value="${escapeHTML(p.stock)}" onchange="editar('${p.id}','stock',this.value)" placeholder="Stock" type="number">
+      <select class="input select" onchange="editar('${p.id}','categoria',this.value)">${categoriasSelect}</select>
+      <div class="img-field">
+        <input class="input" value="${escapeHTML(p.imagen)}" onchange="editar('${p.id}','imagen',this.value)" placeholder="URL de imagen">
+        <button class="btn btn-ghost btn-icon" onclick="quitarImagen('${p.id}')" title="Quitar imagen">&times;</button>
+      </div>
+      <label class="switch" title="${p.disponible === false ? "Oculto" : "Disponible"}">
+        <input type="checkbox" ${p.disponible !== false ? "checked" : ""} onchange="editar('${p.id}','disponible',this.checked)">
+        <span class="switch-slider"></span>
+      </label>
+      <button class="btn btn-danger" onclick="eliminarProducto('${p.id}')">Eliminar</button>
     </div>`;
-  });
-});
+  }).join("");
+}
 
 // EDITAR
 window.editar = async (id, campo, valor) => {
-  await updateDoc(doc(db, "productos", id), {
-    [campo]: campo === "precio" || campo === "stock" ? Number(valor) : valor
-  });
+  const datos = {};
+  if (campo === "precio" || campo === "stock") datos[campo] = Number(valor);
+  else if (campo === "disponible") datos[campo] = valor;
+  else datos[campo] = valor;
+
+  await updateDoc(doc(db, "productos", id), datos);
+};
+
+// QUITAR IMAGEN
+window.quitarImagen = async (id) => {
+  if (!confirm("¿Quitar la imagen de este producto?")) return;
+  await updateDoc(doc(db, "productos", id), { imagen: "" });
 };
 
 // ELIMINAR PRODUCTO
 window.eliminarProducto = async (id) => {
+  const p = productos.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`¿Eliminar "${p.nombre}"?`)) return;
   await deleteDoc(doc(db, "productos", id));
 };
 
+// SNAPSHOTS
+onSnapshot(categoriasRef, snap => {
+  categorias = [];
+  snap.forEach(docu => categorias.push({ id: docu.id, ...docu.data() }));
+  renderCategorias();
+  renderProductos();
+});
+
+onSnapshot(productosRef, snap => {
+  productos = [];
+  snap.forEach(docu => productos.push({ id: docu.id, ...docu.data() }));
+  renderProductos();
+});
+
 // PEDIDOS + REPORTE
 onSnapshot(pedidosRef, snap => {
-  let div = document.getElementById("pedidos");
+  let div = $("pedidos");
   let reporte = {};
 
   div.innerHTML = "";
@@ -109,23 +228,37 @@ onSnapshot(pedidosRef, snap => {
   snap.forEach(docu => {
     let p = docu.data();
 
-    div.innerHTML += `<p>Total: $${p.total}</p>`;
+    div.innerHTML += `
+    <div class="pedido">
+      <p class="pedido-total">Total: $${p.total}</p>
+      <p class="pedido-detalle">${(p.productos || []).map(x => escapeHTML(x.nombre)).join(", ") || "—"}</p>
+    </div>`;
 
-    p.productos.forEach(prod => {
-      reporte[prod.nombre] = (reporte[prod.nombre] || 0) + 1;
+    (p.productos || []).forEach(prod => {
+      reporte[prod.nombre] = (reporte[prod.nombre] || 0) + (prod.qty || 1);
     });
   });
 
-  let repDiv = document.getElementById("reporte");
+  if (snap.empty) {
+    div.innerHTML = `<p class="empty">Sin pedidos.</p>`;
+  }
+
+  let repDiv = $("reporte");
   repDiv.innerHTML = "<h3>Ventas:</h3>";
 
-  for (let nombre in reporte) {
-    repDiv.innerHTML += `<p>${nombre}: ${reporte[nombre]}</p>`;
+  const nombres = Object.keys(reporte);
+  if (nombres.length === 0) {
+    repDiv.innerHTML += `<p class="empty">Sin ventas registradas.</p>`;
+  } else {
+    for (let nombre of nombres) {
+      repDiv.innerHTML += `<p>${escapeHTML(nombre)}: ${reporte[nombre]}</p>`;
+    }
   }
 });
 
 // BORRAR PEDIDOS
 window.borrarPedidos = async () => {
+  if (!confirm("¿Borrar todos los pedidos?")) return;
   let snap = await getDocs(pedidosRef);
   snap.forEach(async d => {
     await deleteDoc(doc(db, "pedidos", d.id));
@@ -134,6 +267,7 @@ window.borrarPedidos = async () => {
 
 // REINICIAR REPORTE (borra pedidos también)
 window.borrarReporte = async () => {
+  if (!confirm("¿Reiniciar el reporte? Esto borra todos los pedidos.")) return;
   let snap = await getDocs(pedidosRef);
   snap.forEach(async d => {
     await deleteDoc(doc(db, "pedidos", d.id));

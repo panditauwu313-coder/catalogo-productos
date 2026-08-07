@@ -8,18 +8,41 @@
 </head>
 <body>
 
-<h1>Catálogo</h1>
+<header class="header">
+  <div class="container header-inner">
+    <span class="brand">Catálogo<em>.</em></span>
+    <input type="text" id="busqueda" class="search" placeholder="Buscar producto...">
+    <button class="cart-btn" id="cartBtn" aria-label="Abrir carrito">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 7h12l1 13H5L6 7z"/>
+        <path d="M9 7a3 3 0 0 1 6 0"/>
+      </svg>
+      <span class="cart-badge hidden" id="cartBadge">0</span>
+    </button>
+  </div>
+</header>
 
-<input type="text" id="busqueda" placeholder="Buscar producto...">
-<select id="categoria"></select>
+<main class="container">
+  <div class="filters" id="filtros"></div>
+  <div id="productos" class="grid"></div>
+</main>
 
-<div id="productos" class="catalogo"></div>
+<div class="overlay" id="overlay"></div>
 
-<div class="carrito">
-<div id="listaCarrito"></div>
-<p>Total: $<span id="total">0</span></p>
-<button onclick="hacerPedido()">Pedir</button>
-</div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-header">
+    <h2>Tu carrito</h2>
+    <button class="close-btn" id="closeCart" aria-label="Cerrar carrito">&times;</button>
+  </div>
+  <div class="drawer-body" id="listaCarrito"></div>
+  <div class="drawer-footer">
+    <div class="drawer-total">
+      <span>Total</span>
+      <strong>$<span id="total">0</span></strong>
+    </div>
+    <button class="btn btn-primary btn-block" id="btnPedido" onclick="hacerPedido()">Hacer pedido</button>
+  </div>
+</aside>
 
 <script type="module" src="app.js"></script>
 </body>
